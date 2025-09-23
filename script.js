@@ -1,69 +1,78 @@
-// script.js
+let cart = [];
 
-// Load cart from localStorage or start empty
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
-
-// Add item to cart
+// Add product to cart
 function addToCart(id, name, price) {
-  let item = cart.find(product => product.id === id);
+  // Make sure price is treated as a number
+  price = parseFloat(price);
+
+  // Check if item already exists
+  let item = cart.find(p => p.id === id);
+
   if (item) {
-    item.quantity += 1;
+    item.qty++;
   } else {
-    cart.push({ id, name, price, quantity: 1 });
+    cart.push({ id, name, price, qty: 1 });
   }
-  saveCart();
-  updateCart();
-}
 
-// Remove item from cart
-function removeFromCart(id, name, price) {
-  let itemIndex = cart.findIndex(product => product.id === id);
-  if (itemIndex > -1) {
-    cart[itemIndex].quantity -= 1;
-    if (cart[itemIndex].quantity <= 0) {
-      cart.splice(itemIndex, 1);
-    }
-  }
-  saveCart();
   updateCart();
-}
-
-// Save cart to localStorage
-function saveCart() {
-  localStorage.setItem('cart', JSON.stringify(cart));
 }
 
 // Update cart display
 function updateCart() {
-  const cartList = document.getElementById('cart-list');
-  const cartTotal = document.getElementById('cart-total');
+  let cartList = document.getElementById("cart");
+  let cartTotal = document.getElementById("cart-total");
 
-  if (!cartList || !cartTotal) return; // Prevent errors if cart area doesn't exist
-
-  cartList.innerHTML = '';
+  cartList.innerHTML = "";
   let total = 0;
 
   cart.forEach(item => {
-    const li = document.createElement('li');
-    li.textContent = `${item.name} - $${item.price} x ${item.quantity}`;
+    let li = document.createElement("li");
+    li.textContent = `${item.name} (x${item.qty}) - $${(item.price * item.qty).toFixed(2)}`;
+
+    // remove button
+    let btn = document.createElement("button");
+    btn.textContent = "Remove";
+    btn.onclick = function () {
+      removeFromCart(item.id);
+    };
+
+    li.appendChild(btn);
     cartList.appendChild(li);
-    total += item.price * item.quantity;
+
+    total += item.price * item.qty;
   });
 
-  cartTotal.textContent = `Total: $${total.toFixed(2)}`;
+  cartTotal.textContent = "Total: $" + total.toFixed(2);
 }
 
-// Toggle cart visibility
-document.getElementById('view_cart').addEventListener('click', () => {
-  const cartArea = document.getElementById('cart-area');
-  if (cartArea.style.display === 'none' || cartArea.style.display === '') {
-    cartArea.style.display = 'block';
+// Remove item
+function removeFromCart(id) {
+  cart = cart.filter(item => item.id !== id);
+  updateCart();
+}
+
+// Checkout (for now just an alert, you can link a real checkout page later)
+function goToCheckout() {
+  if (cart.length === 0) {
+    alert("Your cart is empty!");
   } else {
-    cartArea.style.display = 'none';
+    let total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+    alert("Proceeding to checkout. Total: $" + total.toFixed(2));
   }
-});
+}
 
-// Initialize cart display on page load
-document.addEventListener('DOMContentLoaded', updateCart);
+// Toggle cart view
+function viewCart() {
+  let container = document.getElementById("cart-container");
+  container.style.display = container.style.display === "none" ? "block" : "none";
+}
 
-
+function goToCheckout() {
+  if (cart.length === 0) {
+    alert("Your cart is empty!");
+  } else {
+    // save cart in localStorage so checkout.php can access it
+    localStorage.setItem("cart", JSON.stringify(cart));
+    window.location.href = "checkout.php"; // redirect to checkout page
+  }
+}
